@@ -1,0 +1,472 @@
+import { motion, useScroll, useTransform, AnimatePresence } from "motion/react";
+import { 
+  Smartphone, 
+  Layout, 
+  Cpu, 
+  ShieldCheck, 
+  Code, 
+  Palette, 
+  Zap, 
+  Search, 
+  ArrowRight, 
+  Menu, 
+  X,
+  ArrowLeft,
+  ExternalLink,
+  CheckCircle2,
+  Layers,
+  MousePointer2,
+  Sparkles
+} from "lucide-react";
+import { useState, useEffect } from "react";
+
+interface Project {
+  title: string;
+  type: string;
+  tagline: string;
+  desc: string;
+  image: string;
+  tools: string;
+  goal: string;
+  audience: string;
+  problem: string[];
+  solution: string[];
+  result: string[];
+  fonts: string;
+  colors: string[];
+  layout: string;
+  components: string[];
+  animations: string[];
+  mediaType: string;
+  mediaStyle: string;
+  tech: string[];
+}
+
+const projects: Project[] = [
+  {
+    title: "FitForce Elite Gym",
+    type: "Luxury Fitness",
+    tagline: "Elevating fitness through luxury digital experiences.",
+    desc: "Transformed a struggling fitness brand by designing a high-converting landing page featuring an immersive transformation gallery and strategic lead capture funnels.",
+    image: "https://picsum.photos/seed/gym/1200/800",
+    tools: "Figma, Framer",
+    goal: "Increase membership conversions and establish a premium brand identity.",
+    audience: "High-end fitness enthusiasts and professionals seeking a luxury workout environment.",
+    problem: [
+      "Outdated and cluttered layout",
+      "Not mobile-friendly, leading to high bounce rates",
+      "Weak and unclear call-to-action buttons"
+    ],
+    solution: [
+      "Luxury dark UI with gold accents",
+      "Fully responsive mobile-first design",
+      "Strong, strategic 'Join Now' CTAs"
+    ],
+    result: [
+      "45% increase in membership inquiries",
+      "Significant improvement in user engagement time",
+      "Enhanced brand perception as a luxury leader"
+    ],
+    fonts: "Inter & Playfair Display",
+    colors: ["#0A0A0A", "#FACC15", "#1A1A1A"],
+    layout: "Minimalist Grid with generous white space",
+    components: ["Transformation Gallery", "Pricing Tiers", "Testimonial Slider", "Lead Capture Form"],
+    animations: ["Smooth parallax scrolling", "Hover-triggered card lifts", "Text reveal on scroll"],
+    mediaType: "High-resolution custom photography",
+    mediaStyle: "Luxury, Cinematic, High-contrast",
+    tech: ["HTML5", "Tailwind CSS", "Framer Motion", "Figma"]
+  },
+  {
+    title: "UrbanNest Realty",
+    type: "Real Estate",
+    tagline: "Modernizing property discovery for the digital age.",
+    desc: "Revolutionized property presentation with a modern listing platform integrated with advanced filtering systems and interactive virtual tour layouts.",
+    image: "https://picsum.photos/seed/realty/1200/800",
+    tools: "Webflow, Figma",
+    goal: "Improve online property presentation and streamline the search process.",
+    audience: "Modern home buyers, investors, and real estate professionals.",
+    problem: [
+      "Cluttered and confusing property listings",
+      "Low-quality images that failed to engage",
+      "Lack of advanced filtering options"
+    ],
+    solution: [
+      "Clean, scannable grid layout",
+      "High-quality visual-first approach",
+      "Advanced, intuitive filtering system"
+    ],
+    result: [
+      "60% more user interaction with listings",
+      "30% increase in property inquiries",
+      "Reduced time-to-contact for agents"
+    ],
+    fonts: "Montserrat & Roboto",
+    colors: ["#0F172A", "#FFFFFF", "#38BDF8"],
+    layout: "Masonry Grid for dynamic listings",
+    components: ["Interactive Map", "Filter Sidebar", "Virtual Tour Viewer", "Agent Contact Portal"],
+    animations: ["Staggered grid entrance", "Smooth filter transitions", "Image zoom on hover"],
+    mediaType: "Professional architectural photography",
+    mediaStyle: "Clean, Bright, Modern",
+    tech: ["Webflow", "JavaScript", "Figma", "Mapbox API"]
+  },
+  {
+    title: "AromaBliss Restaurant",
+    type: "Food & Beverage",
+    tagline: "A feast for the eyes and the digital palate.",
+    desc: "Elevated the digital dining experience through an elegant website featuring visual storytelling, dynamic menu showcases, and seamless booking integrations.",
+    image: "https://picsum.photos/seed/restaurant/1200/800",
+    tools: "Wix Studio",
+    goal: "Implement a seamless online booking system and showcase culinary artistry.",
+    audience: "Foodies, local diners, and tourists looking for a premium dining experience.",
+    problem: [
+      "Static and uninspiring PDF menu",
+      "No online booking capability",
+      "Basic, dated design that didn't reflect the food quality"
+    ],
+    solution: [
+      "Interactive, categorized digital menu",
+      "Integrated real-time table booking system",
+      "Elegant, editorial-style UI"
+    ],
+    result: [
+      "50% increase in online reservations",
+      "Improved customer experience and feedback",
+      "Higher average order value from digital menu views"
+    ],
+    fonts: "Cormorant Garamond & Lato",
+    colors: ["#2D2D2A", "#E6E1C5", "#5A5A40"],
+    layout: "Editorial split-screen layout",
+    components: ["Interactive Menu", "Reservation Widget", "Visual Storytelling Sections", "Instagram Feed"],
+    animations: ["Elegant fade-ins", "Smooth section transitions", "Parallax image effects"],
+    mediaType: "Stylized food and interior photography",
+    mediaStyle: "Warm, Organic, Sophisticated",
+    tech: ["Wix Studio", "Velo API", "Figma", "CSS3"]
+  },
+  {
+    title: "Elevate Coaching Brand",
+    type: "Personal Branding",
+    tagline: "Empowering leaders through a clear and powerful digital identity.",
+    desc: "Designed a lead-focused digital identity for a high-performance coach, utilizing a conversion-optimized funnel structure and trust-building visual hierarchy.",
+    image: "https://picsum.photos/seed/coaching/1200/800",
+    tools: "Framer",
+    goal: "Boost lead generation and establish authority in the coaching space.",
+    audience: "Aspiring leaders, executives, and professionals seeking personal growth.",
+    problem: [
+      "Weak and inconsistent personal branding",
+      "Poor information hierarchy",
+      "Low trust factor due to unprofessional site"
+    ],
+    solution: [
+      "Strong, cohesive personal branding",
+      "Clear, conversion-focused messaging",
+      "Trust-focused design with social proof"
+    ],
+    result: [
+      "70% higher conversion rate on lead magnets",
+      "Improved credibility and authority perception",
+      "Streamlined client onboarding process"
+    ],
+    fonts: "Space Grotesk & Inter",
+    colors: ["#050505", "#6366F1", "#F8FAFC"],
+    layout: "Conversion-optimized single-page funnel",
+    components: ["Hero Video", "Testimonial Grid", "Funnel Steps", "Booking Calendar"],
+    animations: ["Scroll-triggered text reveal", "Button pulse effects", "Smooth anchor navigation"],
+    mediaType: "Professional lifestyle and studio portraits",
+    mediaStyle: "Minimal, Modern, Trust-focused",
+    tech: ["Framer", "React", "Figma", "Calendly Integration"]
+  }
+];
+
+const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const navLinks = [
+    { name: "About", href: "#about" },
+    { name: "Skills", href: "#skills" },
+    { name: "Work", href: "#work" },
+    { name: "Contact", href: "#contact" },
+  ];
+
+  return (
+    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? "bg-deep-black/80 backdrop-blur-md py-4 border-b border-white/5" : "bg-transparent py-6"}`}>
+      <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="flex items-center gap-3 group cursor-pointer"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        >
+          <div className="w-10 h-10 rounded-full overflow-hidden border border-accent/30 group-hover:border-accent transition-colors duration-300 shadow-[0_0_15px_rgba(250,204,21,0.1)] group-hover:shadow-[0_0_20px_rgba(250,204,21,0.3)]">
+            <img 
+              src="https://random-magenta-hwwxtcsvra.edgeone.app/file_00000000e79c71fdb87c0340b84bf9ff.png" 
+              alt="Ritesh" 
+              className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <span className="text-2xl font-serif italic font-bold text-accent">Ritesh.</span>
+        </motion.div>
+
+        {/* Desktop Nav */}
+        <div className="hidden md:flex gap-8">
+          {navLinks.map((link) => (
+            <motion.a
+              key={link.name}
+              href={link.href}
+              className="relative text-sm uppercase tracking-widest font-medium hover:text-accent transition-colors group"
+              whileHover={{ scale: 1.05 }}
+            >
+              {link.name}
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover:w-full"></span>
+            </motion.a>
+          ))}
+        </div>
+
+        {/* Mobile Toggle */}
+        <button className="md:hidden text-white" onClick={() => setIsOpen(!isOpen)}>
+          {isOpen ? <X /> : <Menu />}
+        </button>
+      </div>
+
+      {/* Mobile Menu */}
+      {isOpen && (
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute top-full left-0 w-full bg-deep-black border-b border-white/10 p-6 flex flex-col gap-4 md:hidden"
+        >
+          {navLinks.map((link) => (
+            <a 
+              key={link.name} 
+              href={link.href} 
+              onClick={() => setIsOpen(false)}
+              className="text-lg font-medium hover:text-accent"
+            >
+              {link.name}
+            </a>
+          ))}
+        </motion.div>
+      )}
+    </nav>
+  );
+};
+
+const Hero = () => {
+  return (
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+      {/* Background Animation & Grid */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-grid-pattern opacity-20" />
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.1, 1],
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent/10 rounded-full blur-[100px]"
+        />
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.2, 0.4, 0.2],
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[120px]"
+        />
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-6">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-left"
+          >
+            <h1 className="text-5xl md:text-7xl xl:text-8xl font-serif font-bold leading-tight mb-6">
+              I’m Ritesh — <br />
+              <span className="text-accent italic">AI-Powered</span> <br />
+              Web Designer
+            </h1>
+            <p className="text-lg md:text-xl text-white/60 max-w-xl mb-10 font-light leading-relaxed">
+              Crafting modern, responsive, and high-performance digital experiences that blend human creativity with AI-driven precision.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row items-center gap-6">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-8 py-4 bg-accent text-deep-black font-bold rounded-full text-lg glow-yellow-hover transition-all duration-300 w-full sm:w-auto"
+              >
+                Message Me on Funngro
+              </motion.button>
+              <div className="flex flex-col items-start">
+                <p className="text-xs uppercase tracking-[0.2em] text-accent/60 font-semibold">
+                  Available for New Projects
+                </p>
+                <p className="text-[10px] text-white/30 uppercase tracking-widest mt-1">Remote / India</p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, x: 50 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            transition={{ duration: 1, delay: 0.2 }}
+            className="relative"
+          >
+            <div className="relative z-10 w-full aspect-[4/5] max-w-md mx-auto rounded-[2rem] overflow-hidden border border-white/10 glow-yellow">
+              <img 
+                src="https://random-magenta-hwwxtcsvra.edgeone.app/file_00000000e79c71fdb87c0340b84bf9ff.png" 
+                alt="Ritesh - Web Designer" 
+                className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-deep-black/80 via-transparent to-transparent" />
+              <div className="absolute bottom-6 left-6">
+                <div className="px-4 py-2 bg-accent/10 backdrop-blur-md border border-accent/20 rounded-full">
+                  <span className="text-xs font-bold text-accent uppercase tracking-widest">Based in India</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Decorative Elements */}
+            <motion.div 
+              animate={{ y: [0, -20, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -top-6 -right-6 w-24 h-24 bg-accent/20 rounded-2xl blur-2xl z-0"
+            />
+            <motion.div 
+              animate={{ y: [0, 20, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+              className="absolute -bottom-10 -left-10 w-32 h-32 bg-accent/10 rounded-full blur-3xl z-0"
+            />
+          </motion.div>
+        </div>
+      </div>
+
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.5, duration: 1 }}
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
+      >
+        <span className="text-[10px] uppercase tracking-[0.3em] text-white/30 font-bold">Scroll</span>
+        <div className="relative w-6 h-10 border-2 border-white/10 rounded-full flex justify-center p-1">
+          <motion.div 
+            animate={{ 
+              y: [0, 16, 0],
+              opacity: [1, 0, 1]
+            }}
+            transition={{ 
+              duration: 2, 
+              repeat: Infinity, 
+              ease: "easeInOut" 
+            }}
+            className="w-1 h-2 bg-accent rounded-full"
+          />
+        </div>
+      </motion.div>
+    </section>
+  );
+};
+
+const About = () => {
+  const { scrollYProgress } = useScroll();
+  const pathLength = useTransform(scrollYProgress, [0, 0.5], [0, 1]);
+
+  const highlights = [
+    { icon: <Smartphone className="w-6 h-6" />, title: "Mobile-First Approach", desc: "Optimized for every screen size." },
+    { icon: <Layout className="w-6 h-6" />, title: "Clean UI Specialist", desc: "Minimalist designs that breathe." },
+    { icon: <Cpu className="w-6 h-6" />, title: "AI-Enhanced Workflow", desc: "Faster delivery with smart tools." },
+    { icon: <ShieldCheck className="w-6 h-6" />, title: "Dedicated & Reliable", desc: "Your vision, my commitment." },
+  ];
+
+  return (
+    <section id="about" className="py-24 bg-white/[0.02] relative overflow-hidden">
+      {/* Decorative Scroll SVG */}
+      <div className="absolute top-0 right-0 w-full h-full pointer-events-none opacity-10">
+        <svg width="100%" height="100%" viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <motion.path
+            d="M800 0C600 200 400 0 200 200C0 400 200 600 0 800"
+            stroke="#FACC15"
+            strokeWidth="2"
+            style={{ pathLength }}
+          />
+        </svg>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="grid md:grid-cols-2 gap-16 items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="text-sm uppercase tracking-[0.3em] text-accent font-bold mb-4">About Me</h2>
+            <h3 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight">
+              Designing the future of the web, <span className="italic">one pixel at a time.</span>
+            </h3>
+            <p className="text-white/60 text-lg leading-relaxed mb-8">
+              With a passion for clean aesthetics and functional design, I help brands establish a powerful online presence. By leveraging the latest AI tools, I ensure that every project is not only visually stunning but also technically superior and delivered with efficiency.
+            </p>
+            <div className="flex items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-2xl w-fit">
+              <div className="w-12 h-12 rounded-full overflow-hidden border border-accent/30">
+                <img 
+                  src="https://random-magenta-hwwxtcsvra.edgeone.app/file_00000000e79c71fdb87c0340b84bf9ff.png" 
+                  alt="Ritesh" 
+                  className="w-full h-full object-cover grayscale"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <div>
+                <p className="text-sm font-serif italic font-bold text-accent">Ritesh</p>
+                <p className="text-[10px] text-white/40 uppercase tracking-widest">Lead Designer</p>
+              </div>
+            </div>
+          </motion.div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {highlights.map((item, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1, duration: 0.5 }}
+                className="p-6 bg-white/5 border border-white/10 rounded-2xl hover:border-accent/50 transition-colors group"
+              >
+                <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center text-accent mb-4 group-hover:scale-110 transition-transform">
+                  {item.icon}
+                </div>
+                <h4 className="text-lg font-bold mb-2">{item.title}</h4>
+                <p className="text-sm text-white/40">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const Skills = () => {
+  const skills = [
+    { name: "Website Design", icon: <Palette className="w-5 h-5" /> },
+    { name: "Responsive Layout", icon: <Smartphone className="w-5 h-5" /> },
+    { name: "Landing Page Design", icon: <Layout className="w-5 h-5" /> },
+    { name: "AI Web Tools", icon: <Cpu className="w-5 h-5" /> },
+    { name: "UI/UX Fundamentals", icon: <Code className="w-5 h-5" /> },
+    { name: "Basic SEO", icon: <Search className="w-5 h-5" /> },
+  ];
+
+  return (
+    <section id="skills" 
