@@ -1,0 +1,388 @@
+{
+  "entities": {
+    "UserAccount": {
+      "title": "User Account",
+      "description": "User profile and role information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "format": "email", "maxLength": 200 },
+        "role": { "type": "string", "enum": ["USER", "ASTROLOGER", "ADMIN"] },
+        "status": { "type": "string", "enum": ["ACTIVE", "SUSPENDED", "PENDING"] },
+        "phone": { "type": "string", "maxLength": 30 },
+        "avatarUrl": { "type": "string", "maxLength": 500 },
+        "provider": { "type": "string", "enum": ["email", "google", "phone", "demo"] },
+        "preferredLanguage": { "type": "string", "enum": ["en", "hi"] },
+        "lastSignInAt": { "type": "string", "format": "date-time" },
+        "isDemoUser": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "displayName", "email", "role", "status", "createdAt", "updatedAt"]
+    },
+    "PersistentBirthProfile": {
+      "title": "Birth Profile",
+      "description": "User birth chart input profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "dateOfBirth": { "type": "string", "maxLength": 20 },
+        "timeOfBirth": { "type": "string", "maxLength": 10 },
+        "birthPlace": { "type": "string", "maxLength": 200 },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
+        "timezone": { "type": "string", "maxLength": 50 },
+        "gender": { "type": "string", "maxLength": 20 },
+        "relationship": { "type": "string", "maxLength": 50 },
+        "isDefault": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name", "dateOfBirth", "timeOfBirth", "birthPlace", "latitude", "longitude", "timezone", "createdAt", "updatedAt"]
+    },
+    "StoredKundliRecord": {
+      "title": "Kundli Record",
+      "description": "Calculated Swiss Ephemeris Kundli output",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "birthProfileId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "calculationProvider": { "type": "string", "maxLength": 50 },
+        "calculationEngine": { "type": "string", "maxLength": 50 },
+        "engineVersion": { "type": "string", "maxLength": 50 },
+        "astrologySettingsVersion": { "type": "string", "maxLength": 50 },
+        "astrologySettings": { "type": "object" },
+        "chartData": { "type": "object" },
+        "calculationStatus": { "type": "string", "maxLength": 50 },
+        "calculatedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "birthProfileId", "userId", "calculationProvider", "chartData", "calculationStatus", "calculatedAt", "createdAt", "updatedAt"]
+    },
+    "AstrologerProfile": {
+      "title": "Astrologer Profile",
+      "description": "Verified astrologer profile for consultations",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "title": { "type": "string", "maxLength": 150 },
+        "bio": { "type": "string", "maxLength": 1000 },
+        "experienceYears": { "type": "number" },
+        "perMinuteCharge": { "type": "number" },
+        "isOnline": { "type": "boolean" },
+        "rating": { "type": "number" },
+        "totalOrders": { "type": "number" },
+        "avatarUrl": { "type": "string", "maxLength": 500 },
+        "isApproved": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name", "title", "experienceYears", "perMinuteCharge", "isApproved", "createdAt", "updatedAt"]
+    },
+    "ConsultationRecord": {
+      "title": "Consultation Record",
+      "description": "Chat or call consultation session",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userName": { "type": "string", "maxLength": 100 },
+        "astrologerId": { "type": "string", "maxLength": 128 },
+        "astrologerName": { "type": "string", "maxLength": 100 },
+        "birthProfileId": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "maxLength": 50 },
+        "status": { "type": "string", "maxLength": 50 },
+        "durationMinutes": { "type": "number" },
+        "topic": { "type": "string", "maxLength": 300 },
+        "isDemo": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "astrologerId", "birthProfileId", "type", "status", "createdAt", "updatedAt"]
+    },
+    "ConsultationChatMessage": {
+      "title": "Consultation Chat Message",
+      "description": "Message within a consultation chat session",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "consultationId": { "type": "string", "maxLength": 128 },
+        "senderId": { "type": "string", "maxLength": 128 },
+        "senderName": { "type": "string", "maxLength": 100 },
+        "senderRole": { "type": "string", "maxLength": 50 },
+        "message": { "type": "string", "maxLength": 2000 },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "isRead": { "type": "boolean" }
+      },
+      "required": ["id", "consultationId", "senderId", "senderName", "message", "timestamp", "isRead"]
+    },
+    "AppSettingsRecord": {
+      "title": "App Settings",
+      "description": "Global application configuration",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "appName": { "type": "string", "maxLength": 100 },
+        "version": { "type": "string", "maxLength": 50 },
+        "maintenanceMode": { "type": "boolean" },
+        "allowNewRegistrations": { "type": "boolean" },
+        "currency": { "type": "string", "maxLength": 10 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "appName", "version", "maintenanceMode", "allowNewRegistrations", "currency", "updatedAt"]
+    },
+    "AstrologerPayoutRecord": {
+      "title": "Astrologer Payout Record",
+      "description": "Settlement payout ledger for astrologer earnings",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "astrologerUserId": { "type": "string", "maxLength": 128 },
+        "astrologerId": { "type": "string", "maxLength": 128 },
+        "earningPeriodStart": { "type": "string", "maxLength": 50 },
+        "earningPeriodEnd": { "type": "string", "maxLength": 50 },
+        "grossEarnings": { "type": "number" },
+        "refundAdjustments": { "type": "number" },
+        "netPayable": { "type": "number" },
+        "currency": { "type": "string", "maxLength": 10 },
+        "status": { "type": "string", "enum": ["PENDING", "APPROVED", "PROCESSING", "PAID", "FAILED", "CANCELLED"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "astrologerUserId", "astrologerId", "earningPeriodStart", "earningPeriodEnd", "grossEarnings", "netPayable", "currency", "status", "createdAt", "updatedAt"]
+    },
+    "InAppNotification": {
+      "title": "In-App Notification",
+      "description": "User in-app notification records",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "recipientUserId": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string" },
+        "title": { "type": "string", "maxLength": 200 },
+        "message": { "type": "string", "maxLength": 1000 },
+        "titleHi": { "type": "string", "maxLength": 200 },
+        "messageHi": { "type": "string", "maxLength": 1000 },
+        "relatedEntityId": { "type": "string", "maxLength": 128 },
+        "relatedEntityType": { "type": "string", "enum": ["CONSULTATION", "PAYMENT", "PAYOUT", "SYSTEM"] },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "readAt": { "type": "string", "format": "date-time" },
+        "idempotencyKey": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["id", "recipientUserId", "type", "title", "message", "isRead", "createdAt"]
+    },
+    "ProductionWallet": {
+      "title": "Production Wallet",
+      "description": "Server-authoritative wallet balance in integer paise",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "balancePaise": { "type": "number" },
+        "balance": { "type": "number" },
+        "currency": { "type": "string", "maxLength": 10 },
+        "status": { "type": "string", "enum": ["ACTIVE", "FROZEN", "SUSPENDED"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "balancePaise", "balance", "currency", "status", "createdAt", "updatedAt"]
+    },
+    "ProductionWalletTransaction": {
+      "title": "Production Wallet Transaction",
+      "description": "Immutable ledger record for wallet credits and debits",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "enum": ["CREDIT", "DEBIT"] },
+        "amountPaise": { "type": "number" },
+        "amount": { "type": "number" },
+        "balanceAfterPaise": { "type": "number" },
+        "balanceAfter": { "type": "number" },
+        "source": { "type": "string" },
+        "description": { "type": "string", "maxLength": 500 },
+        "paymentTransactionId": { "type": "string", "maxLength": 128 },
+        "consultationId": { "type": "string", "maxLength": 128 },
+        "provider": { "type": "string", "maxLength": 50 },
+        "status": { "type": "string", "enum": ["SUCCESS", "PENDING", "FAILED"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "isDemo": { "type": "boolean" }
+      },
+      "required": ["id", "userId", "type", "amountPaise", "amount", "balanceAfterPaise", "balanceAfter", "source", "description", "status", "createdAt", "isDemo"]
+    },
+    "AstrologerKycRecord": {
+      "title": "Astrologer KYC Record",
+      "description": "Verification metadata for practitioner onboarding",
+      "type": "object",
+      "properties": {
+        "kycId": { "type": "string", "maxLength": 128 },
+        "astrologerId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "documentType": { "type": "string", "enum": ["Aadhaar", "PAN", "Passport", "Certificate", "Other"] },
+        "verificationStatus": { "type": "string", "enum": ["PENDING", "VERIFIED", "REJECTED"] },
+        "idNumberLast4": { "type": "string", "maxLength": 10 },
+        "documentReference": { "type": "string", "maxLength": 500 },
+        "submittedAt": { "type": "string", "format": "date-time" },
+        "reviewedAt": { "type": "string", "format": "date-time" },
+        "reviewedBy": { "type": "string", "maxLength": 128 },
+        "rejectionReason": { "type": "string", "maxLength": 500 }
+      },
+      "required": ["kycId", "astrologerId", "userId", "documentType", "verificationStatus", "submittedAt"]
+    },
+    "RtcCallSession": {
+      "title": "RTC Call Session",
+      "description": "Real-time voice and video consultation call session ledger",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "consultationId": { "type": "string", "maxLength": 128 },
+        "callerId": { "type": "string", "maxLength": 128 },
+        "recipientId": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "enum": ["VOICE", "VIDEO"] },
+        "status": { "type": "string", "enum": ["REQUESTED", "RINGING", "CONNECTING", "CONNECTED", "RECONNECTING", "ENDED", "FAILED", "DECLINED"] },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "durationSeconds": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "isDemo": { "type": "boolean" }
+      },
+      "required": ["id", "consultationId", "callerId", "recipientId", "type", "status", "startedAt", "durationSeconds", "createdAt", "isDemo"]
+    },
+    "AstrologerEarningRecord": {
+      "title": "Astrologer Earning Record",
+      "description": "Ledger of practitioner revenue per consultation session",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "astrologerUserId": { "type": "string", "maxLength": 128 },
+        "astrologerId": { "type": "string", "maxLength": 128 },
+        "consultationId": { "type": "string", "maxLength": 128 },
+        "paymentTransactionId": { "type": "string", "maxLength": 128 },
+        "grossAmount": { "type": "number" },
+        "grossAmountPaise": { "type": "number" },
+        "platformFee": { "type": "number" },
+        "platformFeePaise": { "type": "number" },
+        "platformFeePercent": { "type": "number" },
+        "astrologerAmount": { "type": "number" },
+        "astrologerAmountPaise": { "type": "number" },
+        "refundAdjustment": { "type": "number" },
+        "refundAdjustmentPaise": { "type": "number" },
+        "netAmount": { "type": "number" },
+        "netAmountPaise": { "type": "number" },
+        "currency": { "type": "string", "maxLength": 10 },
+        "status": { "type": "string", "enum": ["PENDING", "EARNED", "REFUND_ADJUSTED", "REVERSED"] },
+        "payoutId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "isDemo": { "type": "boolean" }
+      },
+      "required": ["id", "astrologerUserId", "astrologerId", "consultationId", "paymentTransactionId", "grossAmount", "grossAmountPaise", "platformFee", "platformFeePaise", "astrologerAmount", "astrologerAmountPaise", "netAmount", "netAmountPaise", "currency", "status", "createdAt", "updatedAt", "isDemo"]
+    },
+    "FCMDeviceToken": {
+      "title": "FCM Device Token",
+      "description": "FCM registration tokens for push notifications",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 256 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "token": { "type": "string", "maxLength": 500 },
+        "platform": { "type": "string", "enum": ["web", "android", "ios"] },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "token", "platform", "isActive", "createdAt", "updatedAt"]
+    },
+    "PushNotificationDelivery": {
+      "title": "Push Notification Delivery",
+      "description": "FCM delivery status ledger",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "recipientUserId": { "type": "string", "maxLength": 128 },
+        "notificationId": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string" },
+        "status": { "type": "string", "enum": ["QUEUED", "ATTEMPTED", "ACCEPTED_BY_PROVIDER", "CONFIRMED_DELIVERY", "FAILED_DISABLED", "FAILED_EXPIRED_TOKEN", "FAILED_ERROR"] },
+        "tokensCount": { "type": "number" },
+        "providerResponse": { "type": "string", "maxLength": 2000 },
+        "errorMessage": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "isDemo": { "type": "boolean" }
+      },
+      "required": ["id", "recipientUserId", "notificationId", "type", "status", "tokensCount", "createdAt", "updatedAt", "isDemo"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "UserAccount" },
+      "description": "User account documents"
+    },
+    "/astrologer_kyc/{kycId}": {
+      "schema": { "$ref": "AstrologerKycRecord" },
+      "description": "Practitioner KYC verification metadata"
+    },
+    "/wallets/{userId}": {
+      "schema": { "$ref": "ProductionWallet" },
+      "description": "Server-authoritative user wallets"
+    },
+    "/wallet_transactions/{transactionId}": {
+      "schema": { "$ref": "ProductionWalletTransaction" },
+      "description": "Immutable wallet transaction ledger"
+    },
+    "/birth_profiles/{profileId}": {
+      "schema": { "$ref": "PersistentBirthProfile" },
+      "description": "User birth profiles"
+    },
+    "/kundli_records/{recordId}": {
+      "schema": { "$ref": "StoredKundliRecord" },
+      "description": "Calculated Kundli records"
+    },
+    "/astrologer_profiles/{astrologerId}": {
+      "schema": { "$ref": "AstrologerProfile" },
+      "description": "Verified astrologer profiles"
+    },
+    "/consultations/{consultationId}": {
+      "schema": { "$ref": "ConsultationRecord" },
+      "description": "Consultation booking records"
+    },
+    "/consultations/{consultationId}/messages/{messageId}": {
+      "schema": { "$ref": "ConsultationChatMessage" },
+      "description": "Chat messages in consultation"
+    },
+    "/app_settings/{settingId}": {
+      "schema": { "$ref": "AppSettingsRecord" },
+      "description": "Global application settings"
+    },
+    "/astrologer_payouts/{payoutId}": {
+      "schema": { "$ref": "AstrologerPayoutRecord" },
+      "description": "Astrologer settlement payout records"
+    },
+    "/astrologer_earnings/{earningId}": {
+      "schema": { "$ref": "AstrologerEarningRecord" },
+      "description": "Ledger of practitioner revenue per consultation session"
+    },
+    "/consultations/{consultationId}/call_sessions/{callSessionId}": {
+      "schema": { "$ref": "RtcCallSession" },
+      "description": "Real-time voice and video consultation call session ledger"
+    },
+    "/notifications/{notifId}": {
+      "schema": { "$ref": "InAppNotification" },
+      "description": "User in-app notifications"
+    },
+    "/fcm_tokens/{tokenId}": {
+      "schema": { "$ref": "FCMDeviceToken" },
+      "description": "FCM registration tokens for push notifications"
+    },
+    "/push_deliveries/{deliveryId}": {
+      "schema": { "$ref": "PushNotificationDelivery" },
+      "description": "FCM delivery status ledger"
+    }
+  }
+}

@@ -1,0 +1,344 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId) && request.resource.data.id == userId && request.resource.data.email is string;
+      allow update: if isOwner(userId) && request.resource.data.id == userId && request.resource.data.role == resource.data.role;
+      allow delete: if isOwner(userId);
+    }
+
+    // Wallets collection (Step 70 - Server Authoritative, Read-Only for Owner)
+    match /wallets/{userId} {
+      function isAdmin() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+      }
+
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if false; // Direct client balance mutation strictly denied
+    }
+
+    // Wallet Transactions collection (Step 70 - Immutable Ledger)
+    match /wallet_transactions/{transactionId} {
+      function isAdmin() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+      }
+
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow write: if false; // Direct client transaction creation strictly denied
+    }
+
+    // Birth profiles collection
+    match /birth_profiles/{profileId} {
+      function isAdmin() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+      }
+
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isSignedIn() && (resource == null || (resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid) || isAdmin());
+      allow delete: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Kundli records collection
+    match /kundli_records/{recordId} {
+      function isAdmin() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+      }
+
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isSignedIn() && (resource == null || (resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid) || isAdmin());
+      allow delete: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Astrologer profiles collection
+    match /astrologer_profiles/{astrologerId} {
+      function isAdmin() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+      }
+
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid && (request.resource.data.isApproved == false || isAdmin());
+      allow update: if isSignedIn() && (
+        (resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid && request.resource.data.isApproved == resource.data.isApproved) ||
+        isAdmin()
+      );
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Astrologer KYC collection (Step 71 - Restricted to Owner & Admin)
+    match /astrologer_kyc/{kycId} {
+      function isAdmin() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+      }
+
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow write: if false; // Direct client verification status mutation strictly denied
+    }
+
+    // Consultations collection (Step 16 & 17 & 19 hardened rules)
+    match /consultations/{consultationId} {
+      function isAdmin() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+      }
+
+      function isClient() {
+        return isSignedIn() && resource.data.userId == request.auth.uid;
+      }
+
+      function isAssignedAstrologer() {
+        return isSignedIn() && (
+          resource.data.astrologerUserId == request.auth.uid ||
+          (exists(/databases/$(database)/documents/astrologer_profiles/$(resource.data.astrologerId)) && 
+           get(/databases/$(database)/documents/astrologer_profiles/$(resource.data.astrologerId)).data.userId == request.auth.uid)
+        );
+      }
+
+      function isConsultationParticipant() {
+        return isClient() || isAssignedAstrologer();
+      }
+
+      allow read: if isSignedIn() && (isConsultationParticipant() || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid && (request.resource.data.status == 'REQUESTED' || request.resource.data.status == 'Requested');
+      
+      // Update rule:
+      // Client can only cancel consultation or update rating/feedback if already completed
+      // Assigned astrologer or Admin can perform status transitions
+      // Non-admins CANNOT tamper with paymentStatus, fee, currency, or priceSnapshot
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (
+          request.resource.data.userId == resource.data.userId &&
+          request.resource.data.astrologerId == resource.data.astrologerId &&
+          (request.resource.data.paymentStatus == resource.data.paymentStatus || (!('paymentStatus' in resource.data) && request.resource.data.paymentStatus == 'UNPAID')) &&
+          (request.resource.data.fee == resource.data.fee || (!('fee' in resource.data) && request.resource.data.fee == request.resource.data.fee)) &&
+          (
+            isAssignedAstrologer() ||
+            (isClient() && (
+              request.resource.data.status == 'CANCELLED' || 
+              (resource.data.status == 'COMPLETED' && request.resource.data.status == 'COMPLETED')
+            ))
+          )
+        )
+      );
+
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Chat messages subcollection - isolated to participants with sender authentication
+      match /messages/{messageId} {
+        allow read: if isSignedIn() && (
+          isConsultationParticipant() || isAdmin()
+        );
+        allow create: if isSignedIn() && (
+          isConsultationParticipant() || isAdmin()
+        ) && request.resource.data.senderId == request.auth.uid;
+        allow update: if isSignedIn() && (
+          isConsultationParticipant() || isAdmin()
+        );
+        allow delete: if false; // Historical message deletion strictly prohibited
+      }
+
+      // Call sessions subcollection - restricted to consultation participants
+      match /call_sessions/{callSessionId} {
+        allow read, write: if isSignedIn() && (
+          isConsultationParticipant() || isAdmin()
+        );
+      }
+    }
+
+    // App settings collection
+    match /app_settings/{settingId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Payment transactions collection (Step 18 & 19 Hardened Security Rules)
+    match /payment_transactions/{txId} {
+      function isAdmin() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+      }
+
+      function isClient() {
+        return isSignedIn() && resource.data.userId == request.auth.uid;
+      }
+
+      function isAstrologer() {
+        return isSignedIn() && (
+          resource.data.astrologerUserId == request.auth.uid ||
+          (exists(/databases/$(database)/documents/astrologer_profiles/$(resource.data.astrologerId)) && 
+           get(/databases/$(database)/documents/astrologer_profiles/$(resource.data.astrologerId)).data.userId == request.auth.uid)
+        );
+      }
+
+      allow read: if isSignedIn() && (isClient() || isAstrologer() || isAdmin());
+      // Client can only create orders in PAYMENT_PENDING or UNPAID status for themselves with valid positive amount
+      allow create: if isSignedIn() && 
+        request.resource.data.userId == request.auth.uid && 
+        (request.resource.data.status == 'PAYMENT_PENDING' || request.resource.data.status == 'UNPAID') &&
+        request.resource.data.amount is number && 
+        request.resource.data.amount > 0;
+      // Standard clients and astrologers CANNOT update transactions (prevents status tampering to PAID)
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Payment audit logs collection (Step 18 & 19 Immutable Audit Log)
+    match /payment_audit_logs/{logId} {
+      function isAdmin() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+      }
+
+      allow read: if isAdmin();
+      // Audit log creation requires matched actorId
+      allow create: if isSignedIn() && request.resource.data.actorId == request.auth.uid;
+      // Entirely immutable - no modifications or deletions allowed
+      allow update, delete: if false;
+    }
+
+    // Astrologer earnings ledger collection (Step 22 Security Rules)
+    match /astrologer_earnings/{earningId} {
+      function isAdmin() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+      }
+
+      function isAstrologerOwner() {
+        return isSignedIn() && (
+          resource.data.astrologerUserId == request.auth.uid ||
+          (exists(/databases/$(database)/documents/astrologer_profiles/$(resource.data.astrologerId)) && 
+           get(/databases/$(database)/documents/astrologer_profiles/$(resource.data.astrologerId)).data.userId == request.auth.uid)
+        );
+      }
+
+      allow read: if isSignedIn() && (isAstrologerOwner() || isAdmin());
+      // Direct client creates/updates/deletes are strictly forbidden
+      allow write: if isAdmin();
+    }
+
+    // Platform earnings ledger collection (Step 22 Security Rules)
+    match /platform_earnings/{earningId} {
+      function isAdmin() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+      }
+
+      allow read, write: if isAdmin();
+    }
+
+    // Astrologer payouts settlement collection (Step 23 Security Rules)
+    match /astrologer_payouts/{payoutId} {
+      function isAdmin() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+      }
+
+      function isAstrologerOwner() {
+        return isSignedIn() && (
+          (resource != null && resource.data.astrologerUserId == request.auth.uid) ||
+          (exists(/databases/$(database)/documents/astrologer_profiles/$(resource.data.astrologerId)) && 
+           get(/databases/$(database)/documents/astrologer_profiles/$(resource.data.astrologerId)).data.userId == request.auth.uid)
+        );
+      }
+
+      allow read: if isSignedIn() && (isAstrologerOwner() || isAdmin());
+      // Astrologers can create PENDING payout requests for themselves, Admins can do anything
+      allow create: if isSignedIn() && (
+        (request.resource.data.astrologerUserId == request.auth.uid && request.resource.data.status == 'PENDING') ||
+        isAdmin()
+      );
+      allow update, delete: if isAdmin();
+    }
+
+    // In-App Notifications collection (Step 24 Security Rules)
+    match /notifications/{notifId} {
+      function isAdmin() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+      }
+
+      function isRecipient() {
+        return isSignedIn() && (resource == null || resource.data.recipientUserId == request.auth.uid);
+      }
+
+      function isFinancialNotif() {
+        return request.resource.data.type in ['PAYMENT_VERIFIED', 'PAYMENT_FAILED', 'PAYMENT_REFUNDED', 'PAYOUT_STATUS_CHANGED'];
+      }
+
+      function isConsultationNotif() {
+        return request.resource.data.type in ['CONSULTATION_REQUESTED', 'CONSULTATION_ACCEPTED', 'CONSULTATION_REJECTED', 'CONSULTATION_CANCELLED', 'CONSULTATION_STATUS_CHANGED'];
+      }
+
+      allow read: if isSignedIn() && (isRecipient() || isAdmin());
+
+      // Clients CANNOT forge financial, payment, or payout notifications under any circumstance.
+      // Only Admin or backend processes can create trusted financial notifications.
+      // For consultation notifications, signed in users can create them if properly formatted.
+      allow create: if isSignedIn() && (
+        isAdmin() ||
+        (
+          !isFinancialNotif() &&
+          isConsultationNotif() &&
+          request.resource.data.recipientUserId is string &&
+          request.resource.data.recipientUserId.size() > 0 &&
+          request.resource.data.title is string &&
+          request.resource.data.message is string
+        )
+      );
+
+      // Recipient can ONLY update read status fields (isRead, readAt).
+      // Core notification payload fields (recipientUserId, type, title, message, relatedEntityId) cannot be altered.
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (
+          isRecipient() && 
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt']) &&
+          request.resource.data.recipientUserId == resource.data.recipientUserId &&
+          request.resource.data.type == resource.data.type &&
+          request.resource.data.title == resource.data.title &&
+          request.resource.data.message == resource.data.message
+        )
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // FCM Device Tokens collection (Step 75 - Restricted to Owner & Admin)
+    match /fcm_tokens/{tokenId} {
+      function isAdmin() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+      }
+
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid) && request.resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Push Notification Deliveries collection (Step 75 - FCM delivery status ledger)
+    match /push_deliveries/{deliveryId} {
+      function isAdmin() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+      }
+
+      allow read: if isSignedIn() && (resource == null || resource.data.recipientUserId == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+  }
+}

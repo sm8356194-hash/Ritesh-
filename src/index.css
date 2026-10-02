@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cinzel", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --color-gold-300: #fde047;
+  --color-gold-400: #eab308;
+  --color-gold-500: #d4af37;
+  --color-gold-600: #b48c26;
+  --color-navy-950: #070b14;
+  --color-navy-900: #0c1222;
+  --color-navy-850: #101930;
+  --color-navy-800: #16203c;
+  --color-navy-700: #1e2b4f;
+  --color-navy-600: #2a3b68;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #070b14;
+  color: #e2e8f0;
+  overflow-x: hidden;
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0b1120;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e2b4f;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #d4af37;
+}
+
+/* Celestial background glow effects */
+.gold-gradient-text {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef08a 30%, #d4af37 70%, #b48c26 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-gradient-border {
+  border-image: linear-gradient(to bottom right, rgba(212, 175, 55, 0.6), rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.4)) 1;
+}

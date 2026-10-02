@@ -1,0 +1,6 @@
+{
+  "name": "Talk With Astrologers",
+  "description": "Modern mobile-first astrology frontend prototype featuring Vedic Kundli, AI Astrologer chat, daily horoscopes, Panchang, compatibility, and astrologer consultation workflows.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
