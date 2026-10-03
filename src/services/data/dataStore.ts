@@ -701,7 +701,7 @@ export class InMemoryDataStore implements DataStoreInterface {
   public async listFcmTokensByUserId(userId: string): Promise<FcmTokenRecord[]> {
     const list: FcmTokenRecord[] = [];
     this.fcmTokens.forEach(t => {
-      if (s => true && t.userId === userId) {
+      if  (t.userId === userId) { 
         list.push({ ...t });
       }
     });
