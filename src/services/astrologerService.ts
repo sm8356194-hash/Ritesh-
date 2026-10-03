@@ -7,6 +7,7 @@
 
 import { AstrologerProfile, UserAccount, ServiceResult, PersistentBirthProfile } from '../types';
 import { DataStore, globalDataStore } from './data/dataStore';
+import { authService } from './auth/authService';
 
 export class AstrologerService {
   private dataStore: DataStore;
@@ -111,9 +112,24 @@ export class AstrologerService {
 
     const saved = await this.dataStore.saveAstrologerProfile(profile);
 
-    // Update user role to ASTROLOGER if not admin
-    if (requestingUser.role === 'USER') {
-      await this.dataStore.updateUser(requestingUser.id, { role: 'ASTROLOGER' });
+    // Update user role to ASTROLOGER only if normal USER (existing ADMIN is strictly preserved)
+    let currentRole = requestingUser.role;
+    try {
+      const persistedUser = await this.dataStore.getUserById(requestingUser.id);
+      if (persistedUser) {
+        currentRole = persistedUser.role;
+      }
+    } catch {
+      // Fallback to requestingUser.role
+    }
+
+    if (currentRole === 'ADMIN') {
+      // Existing ADMIN must NEVER be downgraded to ASTROLOGER
+    } else if (currentRole === 'USER') {
+      const updatedUser = await this.dataStore.updateUser(requestingUser.id, { role: 'ASTROLOGER' });
+      if (updatedUser) {
+        authService.setCurrentUser(updatedUser);
+      }
     }
 
     return {
