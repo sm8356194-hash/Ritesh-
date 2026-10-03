@@ -40,7 +40,11 @@ export const AdminAstrologersTab: React.FC<AdminAstrologersTabProps> = () => {
   const loadAstrologers = async () => {
     setLoading(true);
     setError(null);
-    const user = authService.getCurrentUser();
+    let user = authService.getCurrentUser();
+    if (user && user.role !== 'ADMIN') {
+      const refreshed = await authService.refreshCurrentUser();
+      if (refreshed) user = refreshed;
+    }
     const res = await astrologerService.listAllAstrologers(user);
     setLoading(false);
     if (res.success) {
@@ -52,7 +56,11 @@ export const AdminAstrologersTab: React.FC<AdminAstrologersTabProps> = () => {
 
   const handleApproveToggle = async (astrologerId: string, makeApproved: boolean) => {
     setError(null);
-    const user = authService.getCurrentUser();
+    let user = authService.getCurrentUser();
+    if (user && user.role !== 'ADMIN') {
+      const refreshed = await authService.refreshCurrentUser();
+      if (refreshed) user = refreshed;
+    }
     const res = await astrologerService.adminApproveAstrologer(user, astrologerId, makeApproved);
     if (!res.success) {
       setError(res.error);
