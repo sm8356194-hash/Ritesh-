@@ -1131,8 +1131,8 @@ export type NotificationType =
   | 'PAYMENT_VERIFIED'
   | 'PAYMENT_FAILED'
   | 'PAYMENT_REFUNDED'
-  | 'PAYOUT_STATUS_CHANGED';
-
+  | 'PAYOUT_STATUS_CHANGED'
+  | 'NEW_CHAT_MESSAGE';
 export type RelatedEntityType = 'CONSULTATION' | 'PAYMENT' | 'PAYOUT' | 'SYSTEM';
 
 export interface InAppNotification {
