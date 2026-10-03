@@ -50,7 +50,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSwitchPortalMode }) =>
   }, [activeSection]);
 
   const loadLiveCounts = async () => {
-    const user = authService.getCurrentUser();
+    let user = authService.getCurrentUser();
+    if (user && user.role !== 'ADMIN') {
+      const refreshed = await authService.refreshCurrentUser();
+      if (refreshed) user = refreshed;
+    }
     if (user) {
       const uRes = await authService.listAllUsersForAdmin(user);
       if (uRes.success) setLiveUserCount(uRes.data.length);
