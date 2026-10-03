@@ -1278,6 +1278,5 @@ export interface PushNotificationDelivery {
   updatedAt: string;
   isDemo: boolean;
 }
-
-
-
+  export type FcmTokenRecord = FCMDeviceToken;
+export type PushNotificationAuditRecord = PushNotificationDelivery;
