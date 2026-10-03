@@ -436,6 +436,21 @@ export class AuthService {
     return this.currentSessionUser ? { ...this.currentSessionUser } : null;
   }
 
+  public async refreshCurrentUser(): Promise<UserAccount | null> {
+    if (!this.currentSessionUser) return null;
+    try {
+      const freshUser = await this.dataStore.getUserById(this.currentSessionUser.id);
+      if (freshUser) {
+        this.currentSessionUser = freshUser;
+        this.notifyListeners();
+        return freshUser;
+      }
+    } catch (e) {
+      console.warn('Failed to refresh current session user:', e);
+    }
+    return this.currentSessionUser;
+  }
+
   public setCurrentUser(user: UserAccount | null): void {
     this.currentSessionUser = user ? { ...user } : null;
     this.markInitialized();
