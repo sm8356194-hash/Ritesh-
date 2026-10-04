@@ -53,6 +53,26 @@ export class AstrologerOnboardingService {
       };
     }
 
+    // Authoritatively obtain current user role from the persistent data store
+    let persistedUser: UserAccount | null = null;
+    try {
+      persistedUser = await this.dataStore.getUserById(requestingUser.id);
+    } catch {
+      return {
+        success: false,
+        error: 'Unable to verify user account authorization status. Please try again.',
+        code: 'USER_VERIFICATION_FAILED',
+      };
+    }
+
+    if (!persistedUser) {
+      return {
+        success: false,
+        error: 'User account record not found. Unable to verify authorization.',
+        code: 'USER_NOT_FOUND',
+      };
+    }
+
     if (!input.name || input.name.trim().length < 2) {
       return {
         success: false,
@@ -117,8 +137,9 @@ export class AstrologerOnboardingService {
     const savedProfile = await this.dataStore.saveAstrologerProfile(profile);
     const savedKyc = await this.dataStore.saveAstrologerKyc(kyc);
 
-    // Update user role to ASTROLOGER if not already
-    if (requestingUser.role !== 'ASTROLOGER' && requestingUser.role !== 'ADMIN') {
+    // Update user role to ASTROLOGER only if authoritative persisted role is USER
+    // Existing ADMIN or ASTROLOGER roles must NEVER be overwritten or downgraded
+    if (persistedUser.role === 'USER') {
       await this.dataStore.updateUser(requestingUser.id, { role: 'ASTROLOGER' });
     }
 
