@@ -437,9 +437,10 @@ export class AuthService {
   }
 
   public async refreshCurrentUser(): Promise<UserAccount | null> {
-    if (!this.currentSessionUser) return null;
+    const userId = this.currentSessionUser?.id || auth.currentUser?.uid;
+    if (!userId) return null;
     try {
-      const freshUser = await this.dataStore.getUserById(this.currentSessionUser.id);
+      const freshUser = await this.dataStore.getUserById(userId);
       if (freshUser) {
         this.currentSessionUser = freshUser;
         this.notifyListeners();
