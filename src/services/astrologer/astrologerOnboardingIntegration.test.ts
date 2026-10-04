@@ -166,6 +166,108 @@ async function runAstrologerOnboardingIntegrationTest() {
   const suspendedDir = await onboardingService.listDirectoryAstrologers(false);
   assert(suspendedDir.length === 0, 'SUSPENDED practitioner excluded from public production directory');
 
+  // Requirement 12: Role Preservation Verification (ADMIN never downgraded, ASTROLOGER preserved, USER transitioned)
+  console.log('\n--- Verifying Role Preservation during Onboarding ---');
+
+  // Case A: Persisted ADMIN + stale requestingUser role USER -> role remains ADMIN
+  const staleAdminCaller: UserAccount = {
+    ...adminUser,
+    role: 'USER', // Simulating stale or unrefreshed client-side session state
+  };
+  const adminApplyRes = await onboardingService.submitOnboardingApplication(staleAdminCaller, {
+    name: 'Admin Vedic Practitioner',
+    title: 'Executive Astrologer',
+    bio: 'Platform administrator with Vedic expertise',
+    education: 'Vedic Master',
+    skills: ['Kundli'],
+    languages: ['English'],
+    experienceYears: 15,
+    perMinuteCharge: 60,
+    documentType: 'Passport',
+  });
+  assert(adminApplyRes.success === true, 'Admin astrologer onboarding application succeeded');
+  const checkAdminAfter = await testStore.getUserById(adminUser.id);
+  assert(checkAdminAfter?.role === 'ADMIN', 'Case A: Persisted ADMIN is strictly preserved and NEVER downgraded to ASTROLOGER');
+
+  // Case B: Persisted ASTROLOGER + stale requestingUser role USER -> role remains ASTROLOGER
+  const staleAstroCaller: UserAccount = {
+    ...astroUser,
+    id: `usr_astro_stale_${Date.now()}`,
+    role: 'USER', // Simulating stale client session
+  };
+  await testStore.saveUser({
+    ...staleAstroCaller,
+    role: 'ASTROLOGER',
+  });
+  const astroApplyRes = await onboardingService.submitOnboardingApplication(staleAstroCaller, {
+    name: 'Practitioner Stale Check',
+    title: 'Vedic Scholar',
+    bio: 'Existing practitioner',
+    education: 'Astrology Degree',
+    skills: ['Vastu'],
+    languages: ['Hindi'],
+    experienceYears: 8,
+    perMinuteCharge: 35,
+    documentType: 'Aadhaar',
+  });
+  assert(astroApplyRes.success === true, 'Astrologer onboarding application succeeded');
+  const checkAstroAfter = await testStore.getUserById(staleAstroCaller.id);
+  assert(checkAstroAfter?.role === 'ASTROLOGER', 'Case B: Persisted ASTROLOGER is preserved and not mutated unnecessarily');
+
+  // Case C: Persisted USER -> transitions to ASTROLOGER
+  const freshClient: UserAccount = {
+    id: `usr_fresh_client_${Date.now()}`,
+    displayName: 'Fresh Client',
+    email: 'fresh@vedic.app',
+    role: 'USER',
+    status: 'ACTIVE',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    isDemoUser: false,
+  };
+  await testStore.saveUser(freshClient);
+  const freshClientApplyRes = await onboardingService.submitOnboardingApplication(freshClient, {
+    name: 'New Astrologer Applicant',
+    title: 'Tarot and Vedic Reader',
+    bio: 'New talent',
+    education: 'Diploma in Astrology',
+    skills: ['Kundli'],
+    languages: ['Hindi', 'English'],
+    experienceYears: 3,
+    perMinuteCharge: 25,
+    documentType: 'Aadhaar',
+  });
+  assert(freshClientApplyRes.success === true, 'Fresh client astrologer onboarding succeeded');
+  const checkClientAfter = await testStore.getUserById(freshClient.id);
+  assert(checkClientAfter?.role === 'ASTROLOGER', 'Case C: Persisted USER correctly transitions to ASTROLOGER');
+
+  // Case D: Non-existent user record -> returns error, does not downgrade or assume USER
+  const ghostUser: UserAccount = {
+    id: 'usr_non_existent_ghost',
+    displayName: 'Ghost',
+    email: 'ghost@vedic.app',
+    role: 'USER',
+    status: 'ACTIVE',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    isDemoUser: false,
+  };
+  const ghostRes = await onboardingService.submitOnboardingApplication(ghostUser, {
+    name: 'Ghost Applicant',
+    title: 'Reader',
+    bio: 'Ghost bio',
+    education: 'None',
+    skills: ['Kundli'],
+    languages: ['English'],
+    experienceYears: 1,
+    perMinuteCharge: 20,
+    documentType: 'PAN',
+  });
+  assert(ghostRes.success === false, 'Case D: Non-existent user fails safely without assuming USER role');
+  if (!ghostRes.success) {
+    assert(ghostRes.code === 'USER_NOT_FOUND', 'Case D: Returns USER_NOT_FOUND code');
+  }
+
   console.log('\n=== ALL STEP 71 ASTROLOGER ONBOARDING TESTS PASSED! ===');
 }
 
