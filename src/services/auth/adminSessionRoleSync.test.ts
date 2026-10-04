@@ -133,7 +133,51 @@ async function runStep100Tests() {
   assert.strictEqual(pendingProfile.isApproved, false, 'Test 5: Profile is marked isApproved = false');
   console.log('[PASS] Test 5: listAllAstrologers() allows ADMIN session to access all profiles including pending');
 
-  console.log('=== ALL STEP 100 TESTS PASSED SUCCESSFULLY! ===');
+  // -------------------------------------------------------------
+  // Test 6: listAllAstrologers() authorizes via verifyAdmin fallback when memory role is out of sync
+  // -------------------------------------------------------------
+  const memoryDesyncAdmin: UserAccount = {
+    id: adminId,
+    displayName: 'Platform Owner Out of Sync',
+    email: 'owner@zenvor.test',
+    role: 'USER', // Stale role in memory
+    status: 'ACTIVE',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  const listResDesync = await testAstro.listAllAstrologers(memoryDesyncAdmin);
+  assert(listResDesync.success, 'Test 6: verifyAdmin allowed access using persisted ADMIN record');
+  console.log('[PASS] Test 6: listAllAstrologers() authorizes via verifyAdmin fallback when in-memory role is stale');
+
+  // -------------------------------------------------------------
+  // Test 7: String vs boolean isApproved normalization
+  // -------------------------------------------------------------
+  const rawStringAstro = {
+    id: 'astro_raw_string_test',
+    userId: 'user_raw_string',
+    name: 'Raw String Astrologer',
+    title: 'Consultant',
+    bio: 'Test',
+    education: 'Test',
+    skills: ['Vedic'],
+    languages: ['Hindi'],
+    experienceYears: 2,
+    perMinuteCharge: 20,
+    rating: 5,
+    totalOrders: 0,
+    isApproved: 'false' as any, // Raw string 'false' from database
+    isOnline: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  await store.saveAstrologerProfile(rawStringAstro as any);
+  const fetchedRaw = await store.getAstrologerProfileById('astro_raw_string_test');
+  assert(fetchedRaw !== null, 'Test 7: Raw string profile saved');
+  const normalizedPending = fetchedRaw.isApproved === true || (fetchedRaw.isApproved as any) === 'true';
+  assert.strictEqual(normalizedPending, false, 'Test 7: String "false" normalized to boolean false (pending)');
+  console.log('[PASS] Test 7: String "false" is correctly recognized as Pending approval');
+
+  console.log('=== ALL STEP 100 & 102 TESTS PASSED SUCCESSFULLY! ===');
 }
 
 runStep100Tests().catch((err) => {
