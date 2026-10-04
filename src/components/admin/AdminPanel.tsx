@@ -46,10 +46,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSwitchPortalMode }) =>
   const [liveConsultationCount, setLiveConsultationCount] = useState<number>(INITIAL_ADMIN_CONSULTATIONS.length);
 
   useEffect(() => {
+    let isMounted = true;
     loadLiveCounts();
+
+    const unsubscribe = authService.subscribe(() => {
+      if (isMounted) {
+        loadLiveCounts();
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, [activeSection]);
 
   const loadLiveCounts = async () => {
+    if (!authService.isAuthInitialized()) {
+      await authService.waitForInitialization();
+    }
+
     let user = authService.getCurrentUser();
     if (user && user.role !== 'ADMIN') {
       const refreshed = await authService.refreshCurrentUser();
